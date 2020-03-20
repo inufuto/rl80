@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "rl80": {
+      "commandName": "Project",
+      "commandLineArgs": "\"D:\\MSX\\PC80\\mazy\\mazy.p6\"  C100 E000 mazy.o80 vram.o80 stages.o80 map.o80 PC80.o80 man.o80 knife.o80 sound.o80 mon.o80 "
+    }
+  }
+}

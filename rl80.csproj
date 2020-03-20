@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PublishSingleFile>true</PublishSingleFile>
+    <RuntimeIdentifier>win10-x86</RuntimeIdentifier>
+    <RootNamespace>Inu.Linker.Z80</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="down.bat" />
+    <None Remove="liblist.bat" />
+    <None Remove="ud.bat" />
+    <None Remove="up.bat" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assembler\" />
+    <Folder Include="Language\" />
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
+</Project>
