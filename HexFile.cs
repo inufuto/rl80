@@ -40,7 +40,7 @@ namespace Inu.Linker.Z80
                 int sum = size + low + high + (int)type;
 
                 writer.Write(HeadChar + ToHex(size) + ToHex(high) + ToHex(low) + ToHex((int)type));
-                foreach (var b in bytes) {
+                foreach (byte b in bytes) {
                     writer.Write(ToHex(b));
                     sum += b;
                 }

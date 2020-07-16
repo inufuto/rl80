@@ -1,5 +1,6 @@
 ﻿using Inu.Language;
 using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace Inu.Assembler
@@ -14,12 +15,20 @@ namespace Inu.Assembler
     {
         public AddressType Type { get; private set; }
         public int Value { get; private set; }
-        public bool Parenthesized { get; set; } = false;
 
-        public Address(AddressType type, int value)
+        public int? Id { get; private set; }
+
+        public bool Parenthesized { get; set; } = false;
+        public static Address Default => new Address(AddressType.Const, 0);
+
+        public Address(AddressType type, int value, int? id = null)
         {
+            if (type == AddressType.External) {
+                Debug.Assert(id != null);
+            }
             Type = type;
             Value = value;
+            Id = id;
         }
 
         public Address(int constValue) : this(AddressType.Const, constValue) { }
@@ -36,34 +45,38 @@ namespace Inu.Assembler
         {
             stream.WriteByte((int)Type);
             stream.WriteWord(Value);
+            if (Type == AddressType.External) {
+                Debug.Assert(Id != null);
+                stream.WriteWord(Id.Value);
+            }
         }
 
         public void Read(Stream stream)
         {
             Type = (AddressType)(sbyte)stream.ReadByte();
             Value = stream.ReadWord();
+            if (Type == AddressType.External) {
+                Id = stream.ReadWord();
+            }
         }
 
         public void AddOffset(int offset) { Value += offset; }
 
-        public static bool operator ==(Address a, Address b)
+        public static bool operator ==(Address? a, Address? b)
         {
-            if (((object)a) == null) { return ((object)b) == null; }
-            if (((object)b) == null) { return false; }
+            if ((a as object) == null) { return (b as object) == null; }
+            if ((b as object) == null) { return false; }
             return a.Type == b.Type && a.Value == b.Value;
         }
 
-        public static bool operator !=(Address a, Address b)
+        public static bool operator !=(Address? a, Address? b)
         {
             return !(a == b);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (obj is Address) {
-                return this == (Address)obj;
-            }
-            return base.Equals(obj);
+            return obj is Address address && this == address;
         }
 
         public override int GetHashCode()

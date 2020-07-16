@@ -18,6 +18,12 @@ namespace Inu.Language
             stream.WriteByte(value >> 8);
         }
 
+        public static void WriteDWord(this Stream stream, uint value)
+        {
+            stream.WriteWord((ushort)value);
+            stream.WriteWord((ushort)(value >> 16));
+        }
+
         public static void WriteString(this Stream stream, string s)
         {
             byte[] bytes = Encoding.ASCII.GetBytes(s);

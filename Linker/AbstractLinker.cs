@@ -16,7 +16,7 @@ namespace Inu.Linker
 
         private readonly int[] addresses = new int[(int)AddressType.SegmentCount];
         private readonly Segment[] segments = new Segment[] { new Segment(AddressType.Code), new Segment(AddressType.Data) };
-        private string targetName;
+        private string? targetName;
         private readonly List<string> objNames = new List<string>();
         private readonly StringTable identifiers = new StringTable(1);
         private readonly Dictionary<int, Symbol> symbols = new Dictionary<int, Symbol>();
@@ -30,8 +30,8 @@ namespace Inu.Linker
                 return Failure;
             }
             targetName = args[0];
-            string directory = Path.GetDirectoryName(targetName);
-            if (directory.Length == 0) {
+            var directory = Path.GetDirectoryName(targetName);
+            if (string.IsNullOrEmpty(directory)) {
                 directory = Directory.GetCurrentDirectory();
             }
 
@@ -53,10 +53,11 @@ namespace Inu.Linker
             }
 
             int objIndex = 0;
-            for (var i = 3; i < args.Length; ++i) {
+            for (int i = 3; i < args.Length; ++i) {
                 string objName = args[i];
                 objNames.Add(objName);
-                if (Path.GetDirectoryName(objName).Length == 0) {
+                var objDirect = Path.GetDirectoryName(objName);
+                if (string.IsNullOrEmpty(objDirect)) {
                     objName = directory + Path.DirectorySeparatorChar + objName;
                 }
                 ReadObjectFile(objName, objIndex++);
@@ -146,7 +147,8 @@ namespace Inu.Linker
                 location.AddOffset(offsets[(int)location.Type]);
                 Address value = new Address(stream);
                 if (value.Type == AddressType.External) {
-                    string name = identifiers[value.Value];
+                    Debug.Assert(value.Id != null);
+                    string name = identifiers[value.Id.Value];
                     int id = this.identifiers.Add(name);
                     externals[location] = new External(id, objIndex);
                 }
@@ -203,7 +205,7 @@ namespace Inu.Linker
                     FixAddress(pair.Key, symbol.Address);
                 }
                 else {
-                    string name = identifiers.FromId(id);
+                    var name = identifiers.FromId(id);
                     ShowError("Undefined external: " + name + " in " + objNames[pair.Value.ObjIndex]);
                 }
             }
@@ -233,12 +235,13 @@ namespace Inu.Linker
 
         private void SaveSymbolFile(string fileName)
         {
-            using (var stream = new StreamWriter(fileName, false, Encoding.UTF8)) {
+            using (StreamWriter stream = new StreamWriter(fileName, false, Encoding.UTF8)) {
                 int maxNameLength = 0;
                 int maxFileNameLength = 0;
                 SortedDictionary<string, Symbol> nameIndexedSymbols = new SortedDictionary<string, Symbol>();
-                foreach (var pair in symbols) {
-                    string name = identifiers.FromId(pair.Key);
+                foreach (KeyValuePair<int, Symbol> pair in symbols) {
+                    var name = identifiers.FromId(pair.Key);
+                    Debug.Assert(name != null);
                     string objName = objNames[pair.Value.ObjIndex];
                     maxNameLength = Math.Max(name.Length, maxNameLength);
                     maxFileNameLength = Math.Max(objName.Length, maxFileNameLength);
@@ -252,7 +255,7 @@ namespace Inu.Linker
                     stream.Write('=');
                 }
                 stream.WriteLine();
-                foreach (var pair in nameIndexedSymbols) {
+                foreach (KeyValuePair<string, Symbol> pair in nameIndexedSymbols) {
                     string name = pair.Key;
                     string objName = objNames[pair.Value.ObjIndex];
                     Address address = pair.Value.Address;

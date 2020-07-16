@@ -6,6 +6,8 @@
     <PublishSingleFile>true</PublishSingleFile>
     <RuntimeIdentifier>win10-x86</RuntimeIdentifier>
     <RootNamespace>Inu.Linker.Z80</RootNamespace>
+    <Authors>Inufuto</Authors>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
