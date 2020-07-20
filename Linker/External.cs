@@ -6,12 +6,15 @@ namespace Inu.Linker
 {
     class External
     {
-        public int Id { get; private set; }
-        public int ObjIndex { get; private set; }
-        public External(int id, int objIndex)
+        public readonly int Id;
+        public readonly int ObjIndex;
+        public readonly int Offset;
+
+        public External(int id, int objIndex, int offset)
         {
             Id = id;
-            this.ObjIndex = objIndex;
+            ObjIndex = objIndex;
+            Offset = offset;
         }
     }
 }

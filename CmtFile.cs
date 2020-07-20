@@ -1,6 +1,5 @@
 ﻿using Inu.Language;
 using System.Diagnostics;
-using System.IO;
 
 namespace Inu.Linker.Z80
 {
@@ -9,9 +8,7 @@ namespace Inu.Linker.Z80
         private const int HeadByte = 0x3a;
         private const int MaxRecordSize = 0xff;
 
-        public CmtFile(string fileName) : base(fileName)
-        {
-        }
+        public CmtFile(string fileName) : base(fileName) { }
 
         public override void Write(int address, byte[] bytes)
         {

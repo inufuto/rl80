@@ -23,6 +23,11 @@ namespace Inu.Linker.Z80
                     base.SaveTargetFile(file);
                 }
             }
+            else if (ext == ".CAS") {
+                using (CasFile file = new CasFile(fileName)) {
+                    base.SaveTargetFile(file);
+                }
+            }
             else if (ext == ".HEX") {
                 using (HexFile file = new HexFile(fileName)) {
                     base.SaveTargetFile(file);

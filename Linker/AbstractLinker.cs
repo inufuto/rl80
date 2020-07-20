@@ -150,17 +150,17 @@ namespace Inu.Linker
                     Debug.Assert(value.Id != null);
                     string name = identifiers[value.Id.Value];
                     int id = this.identifiers.Add(name);
-                    externals[location] = new External(id, objIndex);
+                    externals[location] = new External(id, objIndex, value.Value);
                 }
                 else {
                     Debug.Assert(value.Type >= 0 && value.Type < AddressType.SegmentCount);
                     value.AddOffset(offsets[(int)value.Type]);
-                    FixAddress(location, value);
+                    FixAddress(location, value, 0);
                 }
             }
         }
 
-        private void FixAddress(Address location, Address value)
+        private void FixAddress(Address location, Address value, int offset)
         {
             Debug.Assert(location.Type >= 0 && location.Type < AddressType.SegmentCount);
             Debug.Assert(value.Type == AddressType.Const || value.Type >= 0 && value.Type < AddressType.SegmentCount);
@@ -168,7 +168,7 @@ namespace Inu.Linker
             if (value.Type >= 0) {
                 address += addresses[(int)value.Type];
             }
-            segments[(int)location.Type].WriteAddress(location.Value, ToBytes(address));
+            segments[(int)location.Type].WriteAddress(location.Value, ToBytes(address + offset));
         }
 
         private void ReadObjectFile(string fileName, int objIndex)
@@ -200,16 +200,17 @@ namespace Inu.Linker
         private void ResolveExternals()
         {
             foreach (KeyValuePair<Address, External> pair in externals) {
-                int id = pair.Value.Id;
-                if (symbols.TryGetValue(id, out var symbol)) {
-                    FixAddress(pair.Key, symbol.Address);
+                var external = pair.Value;
+                if (symbols.TryGetValue(external.Id, out var symbol)) {
+                    FixAddress(pair.Key, symbol.Address, external.Offset);
                 }
                 else {
-                    var name = identifiers.FromId(id);
-                    ShowError("Undefined external: " + name + " in " + objNames[pair.Value.ObjIndex]);
+                    var name = identifiers.FromId(external.Id);
+                    ShowError("Undefined external: " + name + " in " + objNames[external.ObjIndex]);
                 }
             }
         }
+
 
         private void SaveTargetFile(string fileName)
         {
