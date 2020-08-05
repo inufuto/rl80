@@ -8,33 +8,47 @@ namespace Inu.Linker.Z80
     {
         protected override void SaveTargetFile(string fileName, string ext)
         {
-            if (ext == ".CMT") {
-                using (CmtFile file = new CmtFile(fileName)) {
+            switch (ext)
+            {
+                case ".CMT":
+                {
+                    using CmtFile file = new CmtFile(fileName);
                     base.SaveTargetFile(file);
+                    break;
                 }
-            }
-            else if (ext == ".P6") {
-                using (P6File file = new P6File(fileName)) {
+                case ".P6":
+                {
+                    using P6File file = new P6File(fileName);
                     base.SaveTargetFile(file);
+                    break;
                 }
-            }
-            else if (ext == ".MZT") {
-                using (MztFile file = new MztFile(fileName)) {
+                case ".MZT":
+                {
+                    using MztFile file = new MztFile(fileName);
                     base.SaveTargetFile(file);
+                    break;
                 }
-            }
-            else if (ext == ".CAS") {
-                using (CasFile file = new CasFile(fileName)) {
+                case ".CAS":
+                {
+                    using CasFile file = new CasFile(fileName);
                     base.SaveTargetFile(file);
+                    break;
                 }
-            }
-            else if (ext == ".HEX") {
-                using (HexFile file = new HexFile(fileName)) {
+                case ".RAM":
+                {
+                    using RamPakFile file = new RamPakFile(fileName);
                     base.SaveTargetFile(file);
+                    break;
                 }
-            }
-            else {
-                base.SaveTargetFile(fileName, ext);
+                case ".HEX":
+                {
+                    using HexFile file = new HexFile(fileName);
+                    base.SaveTargetFile(file);
+                    break;
+                }
+                default:
+                    base.SaveTargetFile(fileName, ext);
+                    break;
             }
         }
 

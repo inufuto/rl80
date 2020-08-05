@@ -2,7 +2,7 @@
   "profiles": {
     "rl80": {
       "commandName": "Project",
-      "commandLineArgs": "D:\\8bit\\MSX\\NeurasMSX\\Neuras.cas 8100 d000 Main.o80 Stage.o80 Stages.o80 Chars.o80 Solver.o80 Card.o80 Monster.o80  Init.o80 Vram.o80 MapToBackgnd.o80 Sprite.o80 ScanKeys.o80 Status.o80 Sound.o80"
+      "commandLineArgs": "D:\\8bit\\Apple2\\Mazy2\\mazy.bin 4000 6000 mazy.o65 apple2.o65 stages.o65 map.o65"
     }
   }
 }

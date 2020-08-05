@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace Inu.Language
@@ -10,6 +8,13 @@ namespace Inu.Language
         public static void WriteByte(this Stream stream, int value)
         {
             stream.WriteByte((byte)value);
+        }
+
+        public static void WriteBytes(this Stream stream, int value, int count)
+        {
+            for (var i = 0; i < count; ++i) {
+                stream.WriteByte((byte)value);
+            }
         }
 
         public static void WriteWord(this Stream stream, int value)

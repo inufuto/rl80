@@ -65,9 +65,10 @@ namespace Inu.Linker
                     return Failure;
                 }
             }
-            //if (errors.Count > 0) { return Failure; }
 
             ResolveExternals();
+            if (errors.Count > 0) return Failure;
+
             SaveTargetFile(targetName);
 
             string symbolFileName = directory + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(targetName) + ".symbols.txt";
@@ -131,7 +132,7 @@ namespace Inu.Linker
                         break;
                     default:
                         Debug.Assert(address.Type >= 0 && address.Type < AddressType.SegmentCount);
-                        address.AddOffset(offsets[(int)address.Type]);
+                        address = address.Add(offsets[(int)address.Type]);
                         RegisterSymbol(name, address, objIndex);
                         break;
                 }
@@ -144,23 +145,23 @@ namespace Inu.Linker
             for (int i = 0; i < n; ++i) {
                 Address location = new Address(stream);
                 Debug.Assert(location.Type >= 0 && location.Type < AddressType.SegmentCount);
-                location.AddOffset(offsets[(int)location.Type]);
+                location = location.Add(offsets[(int)location.Type]);
                 Address value = new Address(stream);
                 if (value.Type == AddressType.External) {
                     Debug.Assert(value.Id != null);
                     string name = identifiers[value.Id.Value];
                     int id = this.identifiers.Add(name);
-                    externals[location] = new External(id, objIndex, value.Value);
+                    externals[location] = new External(id, objIndex, value.Value, value.Part);
                 }
                 else {
                     Debug.Assert(value.Type >= 0 && value.Type < AddressType.SegmentCount);
-                    value.AddOffset(offsets[(int)value.Type]);
-                    FixAddress(location, value, 0);
+                    value = value.Add(offsets[(int)value.Type]);
+                    FixAddress(location, value, 0, value.Part);
                 }
             }
         }
 
-        private void FixAddress(Address location, Address value, int offset)
+        private void FixAddress(Address location, Address value, int offset, AddressPart part)
         {
             Debug.Assert(location.Type >= 0 && location.Type < AddressType.SegmentCount);
             Debug.Assert(value.Type == AddressType.Const || value.Type >= 0 && value.Type < AddressType.SegmentCount);
@@ -168,7 +169,21 @@ namespace Inu.Linker
             if (value.Type >= 0) {
                 address += addresses[(int)value.Type];
             }
-            segments[(int)location.Type].WriteAddress(location.Value, ToBytes(address + offset));
+
+            var addedValue = address + offset;
+            switch (part) {
+                case AddressPart.Word:
+                    segments[(int)location.Type].WriteAddress(location.Value, ToBytes(addedValue));
+                    break;
+                case AddressPart.LowByte:
+                    segments[(int)location.Type].Bytes[location.Value] = (byte)(addedValue & 0xff);
+                    break;
+                case AddressPart.HighByte:
+                    segments[(int)location.Type].Bytes[location.Value] = (byte)((addedValue >> 8) & 0xff);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private void ReadObjectFile(string fileName, int objIndex)
@@ -177,24 +192,23 @@ namespace Inu.Linker
                 ShowError("File not found: " + fileName);
                 return;
             }
-            using (Stream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read)) {
-                stream.ReadWord();  // version
-                int[] offsets = new int[(int)AddressType.SegmentCount];
-                int segmentIndex = 0;
-                foreach (Segment segment in segments) {
-                    offsets[segmentIndex++] = segment.Size;
-                    int n = stream.ReadWord();
-                    if (n > 0) {
-                        byte[] bytes = new byte[n];
-                        stream.Read(bytes, 0, n);
-                        segment.Append(bytes);
-                    }
-                }
 
-                Dictionary<int, string> identifiers = ReadIdentifiers(stream);
-                ReadSymbols(stream, offsets, identifiers, objIndex);
-                ReadAddressUsages(stream, offsets, identifiers, objIndex);
+            using Stream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+            stream.ReadWord();  // version
+            int[] offsets = new int[(int)AddressType.SegmentCount];
+            var segmentIndex = 0;
+            foreach (Segment segment in segments) {
+                offsets[segmentIndex++] = segment.Size;
+                var n = stream.ReadWord();
+                if (n <= 0) continue;
+                byte[] bytes = new byte[n];
+                stream.Read(bytes, 0, n);
+                segment.Append(bytes);
             }
+
+            Dictionary<int, string> identifiers = ReadIdentifiers(stream);
+            ReadSymbols(stream, offsets, identifiers, objIndex);
+            ReadAddressUsages(stream, offsets, identifiers, objIndex);
         }
 
         private void ResolveExternals()
@@ -202,7 +216,7 @@ namespace Inu.Linker
             foreach (KeyValuePair<Address, External> pair in externals) {
                 var external = pair.Value;
                 if (symbols.TryGetValue(external.Id, out var symbol)) {
-                    FixAddress(pair.Key, symbol.Address, external.Offset);
+                    FixAddress(pair.Key, symbol.Address, external.Offset, external.Part);
                 }
                 else {
                     var name = identifiers.FromId(external.Id);
